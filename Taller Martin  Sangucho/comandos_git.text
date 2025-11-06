@@ -1,0 +1,15 @@
+# Configurar Git
+git config --global user.name "Martin Sangucho"
+git config --global user.email "tu_correo@ejemplo.com"
+
+# Inicializar y conectar con GitHub
+git init
+git add .
+git commit -m "Commit inicial - Taller individual Martin Sangucho"
+git branch -M main
+git remote add origin git@github.com:TU_USUARIO/TALLER_MARTIN_SANGUCHO.git
+git push -u origin main
+
+# Crear tag versión 1.0.0
+git tag -a v1.0.0 -m "Versión 1.0.0 - Taller individual Martin Sangucho"
+git push origin v1.0.0

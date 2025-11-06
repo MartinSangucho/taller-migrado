@@ -1,0 +1,9 @@
+# Construir imagen Docker local
+docker build -t martinsangucho/taller:1.0.0 .
+
+# Probar localmente
+docker run -p 8080:8080 martinsangucho/taller:1.0.0
+
+# Subir a Docker Hub
+docker tag martinsangucho/taller:1.0.0 martinsangucho/taller:1.0.0
+docker push martinsangucho/taller:1.0.0
