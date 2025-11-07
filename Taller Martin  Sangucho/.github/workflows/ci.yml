@@ -2,42 +2,77 @@ name: CI - Taller Martin Sangucho
 
 on:
   push:
+    # Se ejecuta cuando se hace push a la rama 'main'
     branches: [ main ]
+    # Se ejecuta cuando se crea una etiqueta (tag) que empieza con 'v' (ej: v1.0.0)
     tags:
       - 'v*.*.*'
   pull_request:
+    # Se ejecuta cuando se crea o actualiza un Pull Request dirigido a 'main'
     branches: [ main ]
 
 jobs:
+  # =========================================================
+  # 1. Job de Pruebas (Test)
+  # =========================================================
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Checkout repository
+        # Clona el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        # Configura el ambiente de Python
+        uses: actions/setup-python@v5
         with:
+          # Asegura que se usa la versión 3.10 de Python
           python-version: '3.10'
+          cache: 'pip' # Utiliza el caché de pip para acelerar la instalación
+
       - name: Install dependencies
+        # Instala las dependencias listadas en requirements.txt
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run tests
-        run: pytest -q
+          pip install pytest # Asegurarse de que pytest esté instalado
 
+      - name: Run tests
+        # Ejecuta las pruebas usando el archivo test.py (asegúrate de que este archivo contenga pruebas válidas)
+        run: pytest test.py
+
+  # =========================================================
+  # 2. Job de Build y Push de Docker (CD)
+  # =========================================================
   build-and-push:
+    # Solo se ejecuta si el evento es la creación de una etiqueta (tag)
     if: startsWith(github.ref, 'refs/tags/')
+    # Solo se ejecuta si el Job de pruebas (test) fue exitoso
     needs: test
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Login to GHCR
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        # Configuración necesaria para construir imágenes de Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry (GHCR)
+        # Se autentica en el registro de contenedores de GitHub
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
+          # Usamos GITHUB_TOKEN, que se proporciona automáticamente
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push Docker image
+        # Construye la imagen usando el Dockerfile y la sube al GHCR
         uses: docker/build-push-action@v5
         with:
           push: true
+          context: . # El contexto es el directorio actual
+          # Define la etiqueta (tag) de la imagen usando el nombre de la etiqueta de Git (ej: v1.0.0)
           tags: ghcr.io/${{ github.repository_owner }}/taller_martin_sangucho:${{ github.ref_name }}
